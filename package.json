@@ -9,7 +9,7 @@
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk",
-    "deploy": "cdk deploy",
+    "deploy": "npm run build:lambda && cdk deploy",
     "destroy": "cdk destroy",
     "synth": "cdk synth"
   },

@@ -1,7 +1,8 @@
-import { products } from './mock-data/data'
+import { products } from "./mock-data/data";
 
 export async function main() {
-    return {
-      products
-    }
-  }
+  console.log("received request, sending back products");
+  return {
+    products,
+  };
+}

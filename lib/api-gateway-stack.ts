@@ -1,9 +1,8 @@
 import * as cdk from 'aws-cdk-lib';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as path from 'path';
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import { Construct } from 'constructs';
 import { ProductsConstruct } from './products-construct/products-construct';
+import { ProductConstruct } from './product-construct.ts/product-construct';
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class ApiGatewayStack  extends cdk.Stack {
@@ -16,5 +15,6 @@ export class ApiGatewayStack  extends cdk.Stack {
     });
 
     new ProductsConstruct(this, 'products-construct', api);
+    new ProductConstruct(this, 'product-construct', api);
   }
 }
