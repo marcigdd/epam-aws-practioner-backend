@@ -3,7 +3,6 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as path from "path";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import { Construct } from "constructs";
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class ProductsConstruct extends Construct {
   constructor(scope: Construct, id: string, api: apigateway.RestApi) {
@@ -20,39 +19,18 @@ export class ProductsConstruct extends Construct {
     const getProductsListLambdaIntegration = new apigateway.LambdaIntegration(
       getProductsList,
       {
-        integrationResponses: [
-          {
-            statusCode: "200",
-            responseParameters: {
-              "method.response.header.Access-Control-Allow-Origin":
-                "'https://di9quc0wwixjr.cloudfront.net/'",
-              "method.response.header.Access-Control-Allow-Credentials":
-                "'true'",
-            },
-          },
-        ],
-        proxy: false,
+        proxy: true,
       }
     );
 
-    // Create a resource /hello and GET request under it
     const productsResource = api.root.addResource("products");
-    // On this resource attach a GET method which pass reuest to our Lambda function
-    productsResource.addMethod("GET", getProductsListLambdaIntegration, {
-      methodResponses: [
-        {
-          statusCode: "200",
-          responseParameters: {
-            "method.response.header.Access-Control-Allow-Origin": true,
-            "method.response.header.Access-Control-Allow-Credentials": true,
-          },
-        },
-      ],
-    });
 
-    productsResource.addCorsPreflight({
-      allowOrigins: ["https://di9quc0wwixjr.cloudfront.net/"],
-      allowMethods: ["GET"],
-    });
+    const corsOptions: apigateway.CorsOptions = {
+      allowOrigins: apigateway.Cors.ALL_ORIGINS,
+      allowMethods: apigateway.Cors.ALL_METHODS,
+    };
+
+    productsResource.addCorsPreflight(corsOptions);
+    productsResource.addMethod("GET", getProductsListLambdaIntegration);
   }
 }
