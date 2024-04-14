@@ -43,7 +43,7 @@ export class ProductConstruct extends Construct {
     });
 
     idResource.addCorsPreflight({
-      allowOrigins: ["https://dhdv7a2lleuvs.cloudfront.net/"],
+      allowOrigins: ["https://di9quc0wwixjr.cloudfront.net/"],
       allowMethods: ["GET"],
     });
   }
