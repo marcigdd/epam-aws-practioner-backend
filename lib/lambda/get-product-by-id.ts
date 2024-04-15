@@ -1,22 +1,25 @@
-import { Product, products } from "./mock-data/data";
+import { productService } from "../services/product-service";
 
 export async function main(event: { id: string }) {
-  // Simulate an asynchronous operation with a Promise and setTimeout
-  const data: Product[] = await new Promise((resolve) =>
-    setTimeout(() => resolve(products), 1000)
-  );
-  const id = event?.id;
-  if (!id) {
-    console.error("No id provided");
-    throw new Error("No id provided");
+  try {
+    const product = await productService.getProductById(event.id);
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Credentials": true,
+      },
+      body: JSON.stringify(product),
+    };
+  } catch (error) {
+    const isNoIdError = (error as Error)?.message === "No id provided";
+    return {
+      statusCode: isNoIdError ? 400 : 404,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Credentials": true,
+      },
+      body: JSON.stringify(error),
+    };
   }
-  console.log("received request, sending back product by id", { id });
-  const product = data.find((product) => product.id === id);
-  if (!product) {
-    console.error("Product not found");
-    throw new Error("Product not found");
-  }
-  return {
-    product,
-  };
 }

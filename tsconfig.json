@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "rootDir": "lib/lambda",
+    "rootDir": "",
     "outDir": "lib/lambda/dist",
     "target": "ES2020",
     "module": "commonjs",
