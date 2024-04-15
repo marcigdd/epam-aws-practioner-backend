@@ -3,7 +3,6 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as path from "path";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import { Construct } from "constructs";
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class ProductConstruct extends Construct {
   constructor(scope: Construct, id: string, api: apigateway.RestApi) {
@@ -14,33 +13,20 @@ export class ProductConstruct extends Construct {
       memorySize: 1024,
       timeout: cdk.Duration.seconds(5),
       handler: "get-product-by-id.main",
-      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda/dist")),
+      code: lambda.Code.fromAsset("dist"),
     });
 
     const getProductLambdaIntegration = new apigateway.LambdaIntegration(
       getProductsList,
       {
-        requestTemplates: {
-          "application/json": `{
-              "id": "$input.params('id')"
-            }`,
-        },
-        integrationResponses: [{ statusCode: "200" }],
-        proxy: false,
+        proxy: true,
       }
     );
 
-    // Create a resource /hello and GET request under it
     const productResource = api.root.addResource("product");
     const idResource = productResource.addResource("{id}");
 
-    // On this resource attach a GET method which pass reuest to our Lambda function
-    idResource.addMethod("GET", getProductLambdaIntegration, {
-      requestParameters: {
-        "method.request.path.id": true,
-      },
-      methodResponses: [{ statusCode: "200" }],
-    });
+    idResource.addMethod("GET", getProductLambdaIntegration);
 
     idResource.addCorsPreflight({
       allowOrigins: ["https://di9quc0wwixjr.cloudfront.net/"],

@@ -5,8 +5,8 @@
     "epam-aws-practioner-backend": "bin/epam-aws-practioner-backend.js"
   },
   "scripts": {
-    "build:lambda": "tsc",
-    "watch": "tsc -w",
+    "build:lambda": "webpack",
+    "watch": "webpack --watch",
     "test": "jest",
     "cdk": "cdk",
     "deploy": "npm run build:lambda && cdk deploy",
@@ -19,6 +19,7 @@
     "aws-cdk": "2.136.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.2",
+    "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
     "typescript": "~5.4.3",
     "webpack": "^5.91.0",

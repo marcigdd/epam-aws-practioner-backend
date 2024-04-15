@@ -13,7 +13,7 @@ export class ProductsConstruct extends Construct {
       memorySize: 1024,
       timeout: cdk.Duration.seconds(5),
       handler: "get-products.main",
-      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda/dist")),
+      code: lambda.Code.fromAsset("dist"),
     });
 
     const getProductsListLambdaIntegration = new apigateway.LambdaIntegration(

@@ -1,5 +1,6 @@
 *.js
 !jest.config.js
+!webpack.config.js
 *.d.ts
 node_modules
 
@@ -8,3 +9,4 @@ node_modules
 cdk.out
 
 lib\dist
+/dist
