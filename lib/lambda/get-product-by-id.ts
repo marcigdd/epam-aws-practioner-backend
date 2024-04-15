@@ -1,8 +1,10 @@
 import { productService } from "../services/product-service";
 
-export async function main(event: { id: string }) {
+export async function main(event: { pathParameters: { id: string } }) {
   try {
-    const product = await productService.getProductById(event.id);
+    const product = await productService.getProductById(
+      event?.pathParameters?.id
+    );
     return {
       statusCode: 200,
       headers: {
@@ -19,7 +21,7 @@ export async function main(event: { id: string }) {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Credentials": true,
       },
-      body: JSON.stringify(error),
+      body: JSON.stringify((error as Error).message),
     };
   }
 }
