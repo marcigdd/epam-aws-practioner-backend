@@ -43,4 +43,25 @@ module.exports = [
       libraryTarget: 'commonjs2',
     },
   },
+  {
+    entry: './lib/todos/handler.ts',
+    target: 'node',
+    module: {
+      rules: [
+        {
+          test: /\.tsx?$/,
+          use: 'ts-loader',
+          exclude: /node_modules/,
+        },
+      ],
+    },
+    resolve: {
+      extensions: ['.tsx', '.ts', '.js'],
+    },
+    output: {
+      filename: 'todos-lambda.js',
+      path: path.resolve(__dirname, 'dist'),
+      libraryTarget: 'commonjs2',
+    },
+  },
 ];
