@@ -1,16 +1,62 @@
 import { Product, products } from "../mock-data/data";
 
+import * as AWS from "aws-sdk";
+import { v4 as uuidv4 } from "uuid";
+
+// Configure AWS SDK
+AWS.config.update({
+  region: "us-east-2",
+});
+
+const dynamodb = new AWS.DynamoDB.DocumentClient();
+
+enum TableName {
+  Product = "Product",
+  Stock = "Stock",
+}
+
+type Stock = {
+  product_id: string;
+  count: number;
+};
+
 export const productService = {
   getProducts: async () => {
-    // Simulate an asynchronous operation with a Promise and setTimeout
-    //every 10 time throw error
-    if (Math.floor(Math.random() * 10) === 0) {
-      throw new Error("Random unexpected error");
+    const productTableParams = {
+      TableName: TableName.Product,
+    };
+    const stockTableParams = {
+      TableName: TableName.Stock,
+    };
+
+    try {
+      const products = (await dynamodb.scan(productTableParams).promise())
+        .Items as Product[];
+      if (!products) {
+        console.error("Product database empty");
+        throw new Error("Product database empty");
+      }
+      const stock = (await dynamodb.scan(stockTableParams).promise())
+        .Items as Stock[];
+      if (!stock) {
+        console.error("Stock database empty");
+        throw new Error("Stock database empty");
+      }
+      const productList = products.map((product: Product) => {
+        const stockItem = stock.find((item) => {
+          return item.product_id === product.id;
+        });
+        return {
+          ...product,
+          count: stockItem?.count,
+        };
+      });
+      console.log("received request, sending back products", { productList });
+      return productList;
+    } catch (error) {
+      console.error("Error:", error);
+      throw new Error("Error fetching products");
     }
-    const data: Product[] = await new Promise((resolve) =>
-      setTimeout(() => resolve(products), 1000)
-    );
-    return data;
   },
   getProductById: async (id: string) => {
     // Simulate an asynchronous operation with a Promise and setTimeout
@@ -32,3 +78,5 @@ export const productService = {
     };
   },
 };
+
+productService.getProducts().catch(console.error);

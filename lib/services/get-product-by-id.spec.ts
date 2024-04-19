@@ -1,4 +1,4 @@
-import { productService } from "../services/product-service";
+import { productService } from "./product-service";
 import { Product, products } from "../mock-data/data";
 
 describe("getProductById", () => {

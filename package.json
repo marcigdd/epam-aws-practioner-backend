@@ -5,6 +5,7 @@
     "epam-aws-practioner-backend": "bin/epam-aws-practioner-backend.js"
   },
   "scripts": {
+    "populate:db": "ts-node lib/db/populate-db.ts",
     "build:lambda": "webpack",
     "watch": "webpack --watch",
     "test": "jest",

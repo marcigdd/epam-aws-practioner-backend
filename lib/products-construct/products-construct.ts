@@ -1,14 +1,15 @@
 import * as cdk from "aws-cdk-lib";
 import * as lambda from "aws-cdk-lib/aws-lambda";
-import * as path from "path";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import { Construct } from "constructs";
 
+// expose the lambda function on the class
 export class ProductsConstruct extends Construct {
+  public readonly getProductsList: lambda.Function;
   constructor(scope: Construct, id: string, api: apigateway.RestApi) {
     super(scope, id);
 
-    const getProductsList = new lambda.Function(this, "lambda-function", {
+    this.getProductsList = new lambda.Function(this, "lambda-function", {
       runtime: lambda.Runtime.NODEJS_20_X,
       memorySize: 1024,
       timeout: cdk.Duration.seconds(5),
@@ -17,7 +18,7 @@ export class ProductsConstruct extends Construct {
     });
 
     const getProductsListLambdaIntegration = new apigateway.LambdaIntegration(
-      getProductsList,
+      this.getProductsList,
       {
         proxy: true,
       }
