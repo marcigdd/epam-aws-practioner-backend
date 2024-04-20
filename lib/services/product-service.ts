@@ -1,3 +1,4 @@
+import { v4 } from "uuid";
 import { Product } from "../mock-data/data";
 
 import * as AWS from "aws-sdk";
@@ -101,7 +102,7 @@ export const productService = {
     console.log("creating product", { product });
     const productTableParams = {
       TableName: TableName.Product,
-      Item: product,
+      Item: { ...product, id: v4() },
     };
     try {
       await dynamodb.put(productTableParams).promise();
