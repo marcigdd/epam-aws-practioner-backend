@@ -1,7 +1,6 @@
-import { Product, products } from "../mock-data/data";
+import { Product } from "../mock-data/data";
 
 import * as AWS from "aws-sdk";
-import { v4 as uuidv4 } from "uuid";
 
 // Configure AWS SDK
 AWS.config.update({
@@ -59,24 +58,58 @@ export const productService = {
     }
   },
   getProductById: async (id: string) => {
-    // Simulate an asynchronous operation with a Promise and setTimeout
-    const data: Product[] = await new Promise((resolve) =>
-      setTimeout(() => resolve(products), 1000)
-    );
     if (!id) {
       console.error("No id provided");
       throw new Error("No id provided");
     }
-    console.log("received request, sending back product by id", { id });
-    const product = data.find((product) => product.id === id);
+    const productTableParams = {
+      TableName: TableName.Product,
+      Key: {
+        id,
+      },
+    };
+    const stockTableParams = {
+      TableName: TableName.Stock,
+      Key: {
+        product_id: id,
+      },
+    };
+    console.log("productTableParams", productTableParams);
+    const product = (await dynamodb.get(productTableParams).promise())
+      .Item as Product;
+    console.log("product", product);
     if (!product) {
       console.error("Product not found");
       throw new Error("Product not found");
     }
-    return {
-      product,
+
+    const stock = (await dynamodb.get(stockTableParams).promise())
+      .Item as Stock;
+    console.log("stock", stock);
+    if (!stock) {
+      console.error("Stock not found");
+      throw new Error("Stock not found");
+    }
+    console.log("received request, sending back product", { product, stock });
+    return { ...product, count: stock.count };
+  },
+  createProduct: async (product: Product) => {
+    if (!product) {
+      console.error("No product provided");
+      throw new Error("No product provided");
+    }
+    console.log("creating product", { product });
+    const productTableParams = {
+      TableName: TableName.Product,
+      Item: product,
     };
+    try {
+      await dynamodb.put(productTableParams).promise();
+      console.log("succesfully created product", { product });
+      return product;
+    } catch (error) {
+      console.error("Error:", error);
+      throw new Error("Error creating product");
+    }
   },
 };
-
-productService.getProducts().catch(console.error);

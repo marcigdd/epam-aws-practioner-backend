@@ -44,7 +44,7 @@ module.exports = [
     },
   },
   {
-    entry: './lib/todos/handler.ts',
+    entry: './lib/lambda/create-product.ts',
     target: 'node',
     module: {
       rules: [
@@ -59,7 +59,7 @@ module.exports = [
       extensions: ['.tsx', '.ts', '.js'],
     },
     output: {
-      filename: 'todos-lambda.js',
+      filename: 'create-product.js',
       path: path.resolve(__dirname, 'dist'),
       libraryTarget: 'commonjs2',
     },
