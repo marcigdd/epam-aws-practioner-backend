@@ -1,0 +1,24 @@
+import { productService } from "../services/product-service";
+
+export async function main() {
+  try {
+    const products = await productService.getProducts();
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Credentials": true,
+      },
+      body: JSON.stringify(products),
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Credentials": true,
+      },
+      body: JSON.stringify(error),
+    };
+  }
+}
