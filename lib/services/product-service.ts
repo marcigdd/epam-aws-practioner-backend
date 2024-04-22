@@ -1,5 +1,7 @@
 import { v4 } from "uuid";
 import { Product } from "../mock-data/data";
+import { validateProduct } from "../util/validate-product";
+import { validateId } from "../util/validate-id";
 
 import * as AWS from "aws-sdk";
 
@@ -28,41 +30,45 @@ export const productService = {
     const stockTableParams = {
       TableName: TableName.Stock,
     };
+    let products: Product[] | undefined = [];
+    let stock: Stock[] | undefined = [];
 
     try {
-      const products = (await dynamodb.scan(productTableParams).promise())
-        .Items as Product[];
-      if (!products) {
-        console.error("Product database empty");
-        throw new Error("Product database empty");
+      products = (await dynamodb.scan(productTableParams).promise()).Items as
+        | Product[]
+        | undefined;
+      if (!!products && products.length !== 0) {
+        stock = (await dynamodb.scan(stockTableParams).promise()).Items as
+          | Stock[]
+          | undefined;
       }
-      const stock = (await dynamodb.scan(stockTableParams).promise())
-        .Items as Stock[];
-      if (!stock) {
-        console.error("Stock database empty");
-        throw new Error("Stock database empty");
-      }
-      const productList = products.map((product: Product) => {
-        const stockItem = stock.find((item) => {
-          return item.product_id === product.id;
-        });
-        return {
-          ...product,
-          count: stockItem?.count,
-        };
-      });
-      console.log("received request, sending back products", { productList });
-      return productList;
     } catch (error) {
       console.error("Error:", error);
+
       throw new Error("Error fetching products");
     }
+    if (!products || products.length === 0) {
+      console.error("Product database empty");
+      throw new Error("Product database empty");
+    }
+    if (!stock || stock.length === 0) {
+      console.error("Stock database empty");
+      throw new Error("Stock database empty");
+    }
+    const productList = products.map((product: Product) => {
+      const stockItem = stock.find((item) => {
+        return item.product_id === product.id;
+      });
+      return {
+        ...product,
+        count: stockItem?.count,
+      };
+    });
+    console.log("received request, sending back products", { productList });
+    return productList;
   },
   getProductById: async (id: string) => {
-    if (!id) {
-      console.error("No id provided");
-      throw new Error("No id provided");
-    }
+    validateId(id);
     const productTableParams = {
       TableName: TableName.Product,
       Key: {
@@ -95,10 +101,7 @@ export const productService = {
     return { ...product, count: stock.count };
   },
   createProduct: async (product: Product) => {
-    if (!product) {
-      console.error("No product provided");
-      throw new Error("No product provided");
-    }
+    validateProduct(product);
     console.log("creating product", { product });
     const productTableParams = {
       TableName: TableName.Product,
