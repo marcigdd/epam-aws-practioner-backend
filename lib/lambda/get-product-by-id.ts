@@ -1,4 +1,5 @@
 import { productService } from "../services/product-service";
+import { BadRequestError, NotFoundError } from "../util/custom-error";
 
 export async function main(event: { pathParameters: { id: string } }) {
   try {
@@ -13,10 +14,29 @@ export async function main(event: { pathParameters: { id: string } }) {
       },
       body: JSON.stringify(product),
     };
-  } catch (error) {
-    const isNoIdError = (error as Error)?.message === "No id provided";
+  } catch (error: unknown) {
+    if (error instanceof BadRequestError) {
+      return {
+        statusCode: 400,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Credentials": true,
+        },
+        body: JSON.stringify((error as BadRequestError).message),
+      };
+    }
+    if (error instanceof NotFoundError) {
+      return {
+        statusCode: 404,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Credentials": true,
+        },
+        body: JSON.stringify((error as NotFoundError).message),
+      };
+    }
     return {
-      statusCode: isNoIdError ? 400 : 404,
+      statusCode: 500,
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Credentials": true,

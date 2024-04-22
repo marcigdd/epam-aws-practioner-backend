@@ -1,11 +1,12 @@
 import { validate } from "uuid";
+import { BadRequestError } from "./custom-error";
 
 export const validateId = (id: string | null) => {
   if (!id) {
-    throw new Error("No id provided");
+    throw new BadRequestError("No id provided");
   }
   if (!validate(id)) {
-    throw new Error("Invalid id");
+    throw new BadRequestError("Invalid id");
   }
   return null;
 };

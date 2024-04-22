@@ -1,5 +1,4 @@
 //mock aws-sdk library
-import { get } from "http";
 import {
   mockProducts,
   mockStock,

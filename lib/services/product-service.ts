@@ -4,6 +4,7 @@ import { validateProduct } from "../util/validate-product";
 import { validateId } from "../util/validate-id";
 
 import * as AWS from "aws-sdk";
+import { NotFoundError, ServerError } from "../util/custom-error";
 
 // Configure AWS SDK
 AWS.config.update({
@@ -45,15 +46,15 @@ export const productService = {
     } catch (error) {
       console.error("Error:", error);
 
-      throw new Error("Error fetching products");
+      throw new ServerError("Error fetching products");
     }
     if (!products || products.length === 0) {
       console.error("Product database empty");
-      throw new Error("Product database empty");
+      throw new ServerError("Product database empty");
     }
     if (!stock || stock.length === 0) {
       console.error("Stock database empty");
-      throw new Error("Stock database empty");
+      throw new ServerError("Stock database empty");
     }
     const productList = products.map((product: Product) => {
       const stockItem = stock.find((item) => {
@@ -87,7 +88,7 @@ export const productService = {
     console.log("product", product);
     if (!product) {
       console.error("Product not found");
-      throw new Error("Product not found");
+      throw new NotFoundError("Product not found");
     }
 
     const stock = (await dynamodb.get(stockTableParams).promise())
@@ -95,7 +96,7 @@ export const productService = {
     console.log("stock", stock);
     if (!stock) {
       console.error("Stock not found");
-      throw new Error("Stock not found");
+      throw new NotFoundError("Stock not found");
     }
     console.log("received request, sending back product", { product, stock });
     return { ...product, count: stock.count };
@@ -113,7 +114,7 @@ export const productService = {
       return product;
     } catch (error) {
       console.error("Error:", error);
-      throw new Error("Error creating product");
+      throw new ServerError("Error creating product");
     }
   },
 };
