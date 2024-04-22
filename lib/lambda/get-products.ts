@@ -2,6 +2,7 @@ import { productService } from "../services/product-service";
 import { ServerError } from "../util/custom-error";
 
 export async function main() {
+  console.log("event");
   try {
     const products = await productService.getProducts();
     return {

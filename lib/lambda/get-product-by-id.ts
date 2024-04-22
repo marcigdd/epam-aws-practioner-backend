@@ -2,6 +2,7 @@ import { productService } from "../services/product-service";
 import { BadRequestError, NotFoundError } from "../util/custom-error";
 
 export async function main(event: { pathParameters: { id: string } }) {
+  console.log("event", event);
   try {
     const product = await productService.getProductById(
       event?.pathParameters?.id

@@ -102,6 +102,8 @@ export const productService = {
     return { ...product, count: stock.count };
   },
   createProduct: async (product: Product) => {
+    //transaction based product creation
+    
     validateProduct(product);
     console.log("creating product", { product });
     const productTableParams = {
