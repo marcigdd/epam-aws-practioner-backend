@@ -2,7 +2,7 @@ const path = require('path');
 
 module.exports = [
   {
-    entry: './lib/lambda/get-product-by-id.ts',
+    entry: './lib/lambdas/get-product-by-id.ts',
     target: 'node',
     module: {
       rules: [
@@ -23,7 +23,7 @@ module.exports = [
     },
   },
   {
-    entry: './lib/lambda/get-products.ts',
+    entry: './lib/lambdas/get-products.ts',
     target: 'node',
     module: {
       rules: [
@@ -44,7 +44,7 @@ module.exports = [
     },
   },
   {
-    entry: './lib/lambda/create-product.ts',
+    entry: './lib/lambdas/create-product.ts',
     target: 'node',
     module: {
       rules: [
