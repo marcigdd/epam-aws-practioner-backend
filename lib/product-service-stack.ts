@@ -5,7 +5,7 @@ import { ProductsConstruct } from "./constructs/products-construct/products-cons
 import { ProductConstruct } from "./constructs/product-construct/product-construct";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 
-export class ApiGatewayStack extends cdk.Stack {
+export class ProductServiceConstruct extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
