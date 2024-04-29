@@ -31,9 +31,10 @@ export const generateUploadUrl: APIGatewayProxyHandler = async (event) => {
   }
 
   const s3Params = {
-    Bucket: "ImportServiceBucket", // replace with your bucket name
+    Bucket: process.env.BUCKET,
     Key: `uploaded/${fileName}`,
     Expires: 900, // time to expire in seconds
+    ContentType: "text/csv",
   };
 
   try {

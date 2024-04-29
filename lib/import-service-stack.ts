@@ -4,17 +4,10 @@ import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as s3n from "aws-cdk-lib/aws-s3-notifications";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import { Construct } from "constructs";
-import { Bucket } from "aws-cdk-lib/aws-s3";
-import { CfnBucket } from "@aws-cdk/aws-s3";
 
 export class ImportServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
-    const corsRule: s3.CfnBucket.CorsRuleProperty = {
-      allowedOrigins: ["*"],
-      allowedHeaders: ["*"],
-      allowedMethods: [s3.HttpMethods.PUT],
-    };
 
     const bucket = new s3.Bucket(this, "ImportServiceBucket", {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -46,6 +39,9 @@ export class ImportServiceStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(5),
       handler: "import-service.generateUploadUrl",
       code: lambda.Code.fromAsset("dist"),
+      environment: {
+        BUCKET: bucket.bucketName,
+      },
     });
 
     const importFileParser = new lambda.Function(this, "importFileParser", {
@@ -62,6 +58,7 @@ export class ImportServiceStack extends cdk.Stack {
       });
 
     bucket.grantReadWrite(importProductsFile);
+    bucket.grantReadWrite(importFileParser);
 
     bucket.addEventNotification(
       s3.EventType.OBJECT_CREATED,
