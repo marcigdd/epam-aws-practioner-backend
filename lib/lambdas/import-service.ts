@@ -1,7 +1,7 @@
 import { APIGatewayProxyHandler, Context, S3Event } from "aws-lambda";
 import "source-map-support/register";
 import * as AWS from "aws-sdk";
-import * as csvParser from "csv-parser";
+import csvParser from "csv-parser";
 
 const s3 = new AWS.S3({
   signatureVersion: "v4",
@@ -54,10 +54,7 @@ export const generateUploadUrl: APIGatewayProxyHandler = async (event) => {
   }
 };
 
-export const parseProductsFile = async (
-  event: S3Event,
-  _context: Context
-): Promise<void> => {
+export const parseProductsFile = async (event: S3Event, _context: Context) => {
   for (const record of event.Records) {
     const s3Stream = s3
       .getObject({

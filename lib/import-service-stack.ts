@@ -5,14 +5,33 @@ import * as s3n from "aws-cdk-lib/aws-s3-notifications";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import { Construct } from "constructs";
 import { Bucket } from "aws-cdk-lib/aws-s3";
+import { CfnBucket } from "@aws-cdk/aws-s3";
 
 export class ImportServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+    const corsRule: s3.CfnBucket.CorsRuleProperty = {
+      allowedOrigins: ["*"],
+      allowedHeaders: ["*"],
+      allowedMethods: [s3.HttpMethods.PUT],
+    };
 
-    const bucket = new Bucket(this, "ImportServiceBucket", {
+    const bucket = new s3.Bucket(this, "ImportServiceBucket", {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
+      cors: [
+        {
+          allowedMethods: [
+            s3.HttpMethods.GET,
+            s3.HttpMethods.PUT,
+            s3.HttpMethods.POST,
+            s3.HttpMethods.DELETE,
+            s3.HttpMethods.HEAD,
+          ],
+          allowedOrigins: ["*"],
+          allowedHeaders: ["*"],
+        },
+      ],
     });
 
     const api = new apigateway.RestApi(this, "import-service-api", {
