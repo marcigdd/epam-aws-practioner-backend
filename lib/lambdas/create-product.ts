@@ -4,7 +4,7 @@ import { BadRequestError } from "../util/custom-error";
 
 export async function main(event: { body: string }) {
   try {
-    console.log("event", event);
+    console.log(`Event: ${JSON.stringify(event)}`);
     const product = await productService.createProduct(
       JSON.parse(event.body) as Product
     );

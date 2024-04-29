@@ -20,8 +20,8 @@ export class ProductServiceConstruct extends cdk.Stack {
       tableName: "Stock",
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
-    const api = new apigateway.RestApi(this, "my-api", {
-      restApiName: "My API Gateway",
+    const api = new apigateway.RestApi(this, "product-service-api", {
+      restApiName: "Product Service API",
       description: "This API serves the Lambda functions.",
     });
 
