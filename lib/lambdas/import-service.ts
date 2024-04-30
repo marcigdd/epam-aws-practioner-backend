@@ -1,76 +1,117 @@
-import { APIGatewayProxyHandler, Context, S3Event } from "aws-lambda";
-import "source-map-support/register";
-import * as AWS from "aws-sdk";
+import {
+  APIGatewayProxyEventV2,
+  APIGatewayProxyHandlerV2,
+  APIGatewayProxyResultV2,
+  Context,
+  S3Event,
+} from "aws-lambda";
+import {
+  S3Client,
+  PutObjectCommand,
+  CopyObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import csvParser from "csv-parser";
+import { Readable } from "stream";
 
-const s3 = new AWS.S3({
-  signatureVersion: "v4",
-  region: process.env.AWS_REGION,
-});
+const s3Client = new S3Client({ region: process.env.AWS_REGION });
 
-const headers = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Credentials": true,
-  "Access-Control-Allow-Headers":
-    "Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token, X-Amz-User-Agent X-Requested-With",
-};
-
-export const generateUploadUrl: APIGatewayProxyHandler = async (event) => {
-  console.log(`Event: ${JSON.stringify(event)}`);
-  const fileName =
-    event.queryStringParameters && event.queryStringParameters.fileName;
-
+export const generateUploadUrl: APIGatewayProxyHandlerV2 = async (
+  event: APIGatewayProxyEventV2
+): Promise<APIGatewayProxyResultV2> => {
+  const fileName = event.queryStringParameters?.fileName;
   if (!fileName) {
     return {
       statusCode: 400,
-      headers,
-      body: JSON.stringify({
-        error: "fileName is required",
-      }),
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers":
+          "Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token, X-Amz-User-Agent X-Requested-With",
+      },
+      body: 'Missing "name" query parameter',
     };
   }
 
-  const s3Params = {
+  const command = new PutObjectCommand({
     Bucket: process.env.BUCKET,
     Key: `uploaded/${fileName}`,
-    Expires: 900, // time to expire in seconds
     ContentType: "text/csv",
+  });
+
+  const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 60 });
+
+  return {
+    statusCode: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers":
+        "Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token, X-Amz-User-Agent X-Requested-With",
+    },
+    body: JSON.stringify({ uploadURL: signedUrl }),
   };
-
-  try {
-    const uploadURL = s3.getSignedUrl("putObject", s3Params);
-
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ uploadURL }),
-    };
-  } catch (err) {
-    console.log(err);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: "Could not generate a signed url" }),
-    };
-  }
 };
 
 export const parseProductsFile = async (event: S3Event, _context: Context) => {
-  for (const record of event.Records) {
-    const s3Stream = s3
-      .getObject({
-        Bucket: record.s3.bucket.name,
-        Key: record.s3.object.key,
-      })
-      .createReadStream();
+  const s3Client = new S3Client({ region: process.env.AWS_REGION });
 
-    s3Stream
+  for (const record of event.Records) {
+    console.log(`Processing file ${record.s3.object.key}`);
+    const getObjectStream = async () => {
+      const { Body } = await s3Client.send(
+        new GetObjectCommand({
+          Bucket: record.s3.bucket.name,
+          Key: record.s3.object.key,
+        })
+      );
+
+      if (!(Body instanceof Readable)) {
+        throw new Error("Body is not a readable stream.");
+      }
+
+      return Body;
+    };
+
+    const stream = await getObjectStream();
+
+    stream
       .pipe(csvParser())
       .on("data", (data) => {
         console.log(data);
       })
-      .on("end", () => {
+      .on("end", async () => {
         console.log(`Parsing for file ${record.s3.object.key} finished`);
+
+        // copy the file to the 'parsed' directory
+        await s3Client.send(
+          new CopyObjectCommand({
+            Bucket: record.s3.bucket.name,
+            CopySource: `${record.s3.bucket.name}/${record.s3.object.key}`,
+            Key: record.s3.object.key.replace("uploaded", "parsed"),
+          })
+        );
+
+        // delete the file from the 'uploaded' directory
+        try {
+          await s3Client.send(
+            new DeleteObjectCommand({
+              Bucket: record.s3.bucket.name,
+              Key: record.s3.object.key,
+            })
+          );
+        } catch (error) {
+          console.error(
+            `An error occurred while deleting ${record.s3.object.key}:`
+          );
+          console.error(error);
+        }
+
+        console.log(
+          `File ${record.s3.object.key} moved to 'parsed' directory and deleted from 'uploaded' directory`
+        );
       })
       .on("error", (error) => {
         console.log(
