@@ -1,6 +1,8 @@
 import { productService } from "../services/product-service";
+import { ServerError } from "../util/custom-error";
 
 export async function main() {
+  console.log("event");
   try {
     const products = await productService.getProducts();
     return {
@@ -11,14 +13,14 @@ export async function main() {
       },
       body: JSON.stringify(products),
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       statusCode: 500,
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Credentials": true,
       },
-      body: JSON.stringify(error),
+      body: JSON.stringify((error as ServerError).message),
     };
   }
 }
