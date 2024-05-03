@@ -15,8 +15,10 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import csvParser from "csv-parser";
 import { Readable } from "stream";
+import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 
 const s3Client = new S3Client({ region: process.env.AWS_REGION });
+const sqsClient = new SQSClient({ region: process.env.AWS_REGION });
 
 export const generateUploadUrl: APIGatewayProxyHandlerV2 = async (
   event: APIGatewayProxyEventV2
@@ -56,7 +58,7 @@ export const generateUploadUrl: APIGatewayProxyHandlerV2 = async (
 };
 
 export const parseProductsFile = async (event: S3Event, _context: Context) => {
-  const s3Client = new S3Client({ region: process.env.AWS_REGION });
+  const queueUrl = process.env.SQS_QUEUE_URL;
 
   for (const record of event.Records) {
     console.log(`Processing file ${record.s3.object.key}`);
@@ -79,8 +81,18 @@ export const parseProductsFile = async (event: S3Event, _context: Context) => {
 
     stream
       .pipe(csvParser())
-      .on("data", (data) => {
-        console.log(data);
+      .on("data", async (data) => {
+        console.log("Sending message to SQS:", data);
+        try {
+          await sqsClient.send(
+            new SendMessageCommand({
+              QueueUrl: queueUrl,
+              MessageBody: JSON.stringify(data),
+            })
+          );
+        } catch (error) {
+          console.error("Error sending message to SQS:", error);
+        }
       })
       .on("end", async () => {
         console.log(`Parsing for file ${record.s3.object.key} finished`);
@@ -121,4 +133,15 @@ export const parseProductsFile = async (event: S3Event, _context: Context) => {
       });
   }
   console.log(`Event: ${JSON.stringify(event)}`);
+};
+
+import { SQSEvent } from "aws-lambda";
+
+export const catalogBatchProcess = async (event: SQSEvent): Promise<void> => {
+  console.log(`Event: ${JSON.stringify(event)}`);
+
+  for (const record of event.Records) {
+    const messageBody = JSON.parse(record.body);
+    console.log("Message body:", messageBody);
+  }
 };

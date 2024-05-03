@@ -3,6 +3,8 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as s3n from "aws-cdk-lib/aws-s3-notifications";
 import * as s3 from "aws-cdk-lib/aws-s3";
+import * as sqs from "aws-cdk-lib/aws-sqs";
+import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import { Construct } from "constructs";
 
 export class ImportServiceStack extends cdk.Stack {
@@ -44,12 +46,34 @@ export class ImportServiceStack extends cdk.Stack {
       },
     });
 
+    const catalogItemsQueue = new sqs.Queue(this, "catalogItemsQueue");
+
+    const catalogBatchProcess = new lambda.Function(
+      this,
+      "catalogBatchProcess",
+      {
+        runtime: lambda.Runtime.NODEJS_20_X,
+        memorySize: 1024,
+        timeout: cdk.Duration.seconds(5),
+        handler: "import-service.catalogBatchProcess",
+        code: lambda.Code.fromAsset("dist"),
+        environment: {},
+      }
+    );
+
+    catalogBatchProcess.addEventSource(
+      new SqsEventSource(catalogItemsQueue, { batchSize: 5 })
+    );
+
     const importFileParser = new lambda.Function(this, "importFileParser", {
       runtime: lambda.Runtime.NODEJS_20_X,
       memorySize: 1024,
       timeout: cdk.Duration.seconds(5),
       handler: "import-service.parseProductsFile",
       code: lambda.Code.fromAsset("dist"),
+      environment: {
+        SQS_URL: catalogItemsQueue.queueUrl,
+      },
     });
 
     const importProductsFileLambdaIntegration =
