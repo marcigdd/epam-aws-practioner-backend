@@ -17,6 +17,8 @@ import csvParser from "csv-parser";
 import { Readable } from "stream";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import { SQSEvent } from "aws-lambda";
+import { ProductData } from "../db/populate-db";
+import { productService } from "../services/product-service";
 
 const s3Client = new S3Client({ region: process.env.AWS_REGION });
 const sqsClient = new SQSClient({ region: process.env.AWS_REGION });
@@ -58,7 +60,8 @@ export const generateUploadUrl: APIGatewayProxyHandlerV2 = async (
   };
 };
 export const parseProductsFile = async (event: S3Event, _context: Context) => {
-  const tasks: Promise<void>[] = []; // Array to store processing tasks
+  const tasks: Promise<void>[] = [];
+  const sqsQueueUrl = process.env.SQS_URL;
 
   for (const record of event.Records) {
     console.log(`Processing file ${record.s3.object.key}`);
@@ -86,6 +89,18 @@ export const parseProductsFile = async (event: S3Event, _context: Context) => {
           .pipe(csvParser())
           .on("data", async (data) => {
             console.log("data", data);
+            try {
+              const message = JSON.stringify(data);
+              await sqsClient.send(
+                new SendMessageCommand({
+                  QueueUrl: sqsQueueUrl,
+                  MessageBody: message,
+                })
+              );
+              console.log(`Message sent to SQS: ${message}`);
+            } catch (error) {
+              console.error("Error sending message to SQS:", error);
+            }
           })
           .on("end", async () => {
             console.log(`Parsing for file ${record.s3.object.key} finished`);
@@ -136,7 +151,17 @@ export const catalogBatchProcess = async (event: SQSEvent): Promise<void> => {
   console.log(`Event: ${JSON.stringify(event)}`);
 
   for (const record of event.Records) {
-    const messageBody = JSON.parse(record.body);
-    console.log("Message body:", messageBody);
+    try {
+      const messageBody = JSON.parse(record.body) as ProductData;
+      console.log("Message body:", messageBody);
+
+      const product = await productService.createProduct({
+        ...messageBody,
+        price: Number(messageBody.price),
+      });
+      console.log("Product created:", JSON.stringify(product));
+    } catch (error) {
+      console.error("Error occured:", error);
+    }
   }
 };

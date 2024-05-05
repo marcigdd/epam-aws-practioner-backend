@@ -4,8 +4,10 @@ import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as s3n from "aws-cdk-lib/aws-s3-notifications";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as sqs from "aws-cdk-lib/aws-sqs";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import { Construct } from "constructs";
+import { Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 
 export class ImportServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -61,6 +63,14 @@ export class ImportServiceStack extends cdk.Stack {
       }
     );
 
+    const productTableArn = cdk.Fn.importValue("ProductTableArn");
+    const productTable = dynamodb.Table.fromTableArn(
+      this,
+      "ImportedProductTable",
+      productTableArn
+    );
+    productTable.grantWriteData(catalogBatchProcess);
+
     catalogBatchProcess.addEventSource(
       new SqsEventSource(catalogItemsQueue, { batchSize: 5 })
     );
@@ -75,6 +85,14 @@ export class ImportServiceStack extends cdk.Stack {
         SQS_URL: catalogItemsQueue.queueUrl,
       },
     });
+
+    const sqsSendMessagePolicyStatement = new PolicyStatement({
+      effect: Effect.ALLOW,
+      resources: [catalogItemsQueue.queueArn],
+      actions: ["sqs:SendMessage"],
+    });
+
+    importFileParser.addToRolePolicy(sqsSendMessagePolicyStatement);
 
     const importProductsFileLambdaIntegration =
       new apigateway.LambdaIntegration(importProductsFile, {

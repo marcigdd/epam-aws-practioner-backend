@@ -6,7 +6,7 @@
   },
   "scripts": {
     "populate:db": "ts-node lib/db/populate-db.ts",
-    "build:lambda": "node --expose-gc --max-old-space-size=4096 ./node_modules/webpack/bin/webpack.js",
+    "build:lambda": "webpack",
     "watch": "webpack --watch",
     "test": "jest",
     "cdk": "cdk",
