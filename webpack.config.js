@@ -2,7 +2,7 @@ const path = require('path');
 
 module.exports = [
   {
-    entry: './lib/lambda/get-product-by-id.ts',
+    entry: './lib/lambdas/get-product-by-id.ts',
     target: 'node',
     module: {
       rules: [
@@ -23,7 +23,7 @@ module.exports = [
     },
   },
   {
-    entry: './lib/lambda/get-products.ts',
+    entry: './lib/lambdas/get-products.ts',
     target: 'node',
     module: {
       rules: [
@@ -44,7 +44,7 @@ module.exports = [
     },
   },
   {
-    entry: './lib/lambda/create-product.ts',
+    entry: './lib/lambdas/create-product.ts',
     target: 'node',
     module: {
       rules: [
@@ -64,4 +64,32 @@ module.exports = [
       libraryTarget: 'commonjs2',
     },
   },
+  {
+    entry: './lib/lambdas/import-service.ts',
+    target: 'node',
+    module: {
+      rules: [
+        {
+          test: /\.tsx?$/,
+          use: [
+            {
+              loader: 'ts-loader',
+              options: {
+                transpileOnly: true
+              },
+            },
+          ],
+          exclude: /node_modules/,
+        },
+      ],
+    },
+    resolve: {
+      extensions: ['.tsx', '.ts', '.js'],
+    },
+    output: {
+      filename: 'import-service.js',
+      path: path.resolve(__dirname, 'dist'),
+      libraryTarget: 'commonjs2',
+    },
+  }
 ];

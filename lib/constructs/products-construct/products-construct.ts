@@ -10,7 +10,7 @@ export class ProductsConstruct extends Construct {
   constructor(scope: Construct, id: string, api: apigateway.RestApi) {
     super(scope, id);
 
-    this.getProductsList = new lambda.Function(this, "lambda-function", {
+    this.getProductsList = new lambda.Function(this, "getProductsList", {
       runtime: lambda.Runtime.NODEJS_20_X,
       memorySize: 1024,
       timeout: cdk.Duration.seconds(5),

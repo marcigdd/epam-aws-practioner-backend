@@ -7,6 +7,7 @@
       "es2020",
       "dom"
     ],
+    "esModuleInterop": true,
     "declaration": false,
     "strict": true,
     "noImplicitAny": true,
@@ -26,6 +27,6 @@
     ]
   },
   "include": [
-    "lib/lambda/*.ts", "lib/services/get-product-by-id.spec.ts", "lib/services/get-products.spec.ts",
+    "lib/lambdas/*.ts", "lib/services/get-product-by-id.spec.ts", "lib/services/get-products.spec.ts",
   ],
 }
