@@ -19,9 +19,11 @@ import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import { SQSEvent } from "aws-lambda";
 import { ProductData } from "../db/populate-db";
 import { productService } from "../services/product-service";
+import AWS from "aws-sdk";
 
 const s3Client = new S3Client({ region: process.env.AWS_REGION });
 const sqsClient = new SQSClient({ region: process.env.AWS_REGION });
+const sns = new AWS.SNS();
 
 export const generateUploadUrl: APIGatewayProxyHandlerV2 = async (
   event: APIGatewayProxyEventV2
@@ -159,6 +161,19 @@ export const catalogBatchProcess = async (event: SQSEvent): Promise<void> => {
         ...messageBody,
         price: Number(messageBody.price),
       });
+      const message = `Product with ID ${JSON.stringify(
+        product
+      )} has been created.`;
+
+      await sns
+        .publish({
+          TopicArn: process.env.SNS_TOPIC_ARN,
+          Subject: "Product Created",
+          Message: message,
+        })
+        .promise();
+
+      console.log(`SNS message sent: ${message}`);
       console.log("Product created:", JSON.stringify(product));
     } catch (error) {
       console.error("Error occured:", error);

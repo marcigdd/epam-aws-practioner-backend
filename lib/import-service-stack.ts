@@ -5,6 +5,8 @@ import * as s3n from "aws-cdk-lib/aws-s3-notifications";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as sns from "aws-cdk-lib/aws-sns";
+import * as subscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import { Construct } from "constructs";
 import { Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
@@ -50,6 +52,15 @@ export class ImportServiceStack extends cdk.Stack {
 
     const catalogItemsQueue = new sqs.Queue(this, "catalogItemsQueue");
 
+    const createProductTopic = new sns.Topic(this, "createProductTopic", {
+      displayName: "Create Product Topic",
+    });
+
+    const emailSubscription = new subscriptions.EmailSubscription(
+      "marcigdd@gmail.com"
+    );
+    createProductTopic.addSubscription(emailSubscription);
+
     const catalogBatchProcess = new lambda.Function(
       this,
       "catalogBatchProcess",
@@ -59,9 +70,13 @@ export class ImportServiceStack extends cdk.Stack {
         timeout: cdk.Duration.seconds(5),
         handler: "import-service.catalogBatchProcess",
         code: lambda.Code.fromAsset("dist"),
-        environment: {},
+        environment: {
+          SNS_TOPIC_ARN: createProductTopic.topicArn,
+        },
       }
     );
+
+    createProductTopic.grantPublish(catalogBatchProcess);
 
     const productTableArn = cdk.Fn.importValue("ProductTableArn");
     const productTable = dynamodb.Table.fromTableArn(
