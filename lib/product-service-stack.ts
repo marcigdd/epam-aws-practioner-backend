@@ -5,12 +5,13 @@ import { ProductsConstruct } from "./constructs/products-construct/products-cons
 import { ProductConstruct } from "./constructs/product-construct/product-construct";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 
-export class ProductServiceConstruct extends cdk.Stack {
+export class ProductServiceStack extends cdk.Stack {
+  private productTable: dynamodb.Table;
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     // Create dynamodb table to called products partition key id string and sort key title string
-    const productTable = new dynamodb.Table(this, "Product", {
+    this.productTable = new dynamodb.Table(this, "Product", {
       partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
       tableName: "Product",
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -36,10 +37,15 @@ export class ProductServiceConstruct extends cdk.Stack {
       api
     );
 
-    productTable.grantReadData(productsConstruct.getProductsList);
+    this.productTable.grantReadData(productsConstruct.getProductsList);
     stockTable.grantReadData(productsConstruct.getProductsList);
-    productTable.grantReadData(productConstruct.getProduct);
+    this.productTable.grantReadData(productConstruct.getProduct);
     stockTable.grantReadData(productConstruct.getProduct);
-    productTable.grantWriteData(productsConstruct.createProduct);
+    this.productTable.grantWriteData(productsConstruct.createProduct);
+
+    new cdk.CfnOutput(this, "ProductTableArn", {
+      value: this.productTable.tableArn,
+      exportName: "ProductTableArn",
+    });
   }
 }

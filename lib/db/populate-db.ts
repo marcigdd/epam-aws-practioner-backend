@@ -11,7 +11,7 @@ const dynamodb = new AWS.DynamoDB.DocumentClient();
 // Array of test products
 //correct type would be Product[] without id
 
-type ProductData = {
+export type ProductData = {
   title: string;
   description: string;
   price: number;

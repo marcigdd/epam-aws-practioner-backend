@@ -5,6 +5,7 @@ import { validateId } from "../util/validate-id";
 
 import * as AWS from "aws-sdk";
 import { NotFoundError, ServerError } from "../util/custom-error";
+import { ProductData } from "../db/populate-db";
 
 // Configure AWS SDK
 AWS.config.update({
@@ -101,9 +102,8 @@ export const productService = {
     console.log("received request, sending back product", { product, stock });
     return { ...product, count: stock.count };
   },
-  createProduct: async (product: Product) => {
-    //transaction based product creation
-    
+  createProduct: async (product: ProductData) => {
+
     validateProduct(product);
     console.log("creating product", { product });
     const productTableParams = {

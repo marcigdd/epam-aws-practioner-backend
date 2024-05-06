@@ -1,12 +1,13 @@
 import { productService } from "../services/product-service";
 import { Product } from "../mock-data/data";
 import { BadRequestError } from "../util/custom-error";
+import { ProductData } from "../db/populate-db";
 
 export async function main(event: { body: string }) {
   try {
     console.log(`Event: ${JSON.stringify(event)}`);
     const product = await productService.createProduct(
-      JSON.parse(event.body) as Product
+      JSON.parse(event.body) as ProductData
     );
     return {
       statusCode: 200,
