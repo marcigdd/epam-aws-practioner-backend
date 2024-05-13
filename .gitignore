@@ -10,3 +10,5 @@ cdk.out
 
 lib\dist
 /dist
+
+.env
