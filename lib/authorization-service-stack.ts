@@ -1,7 +1,7 @@
 import { Construct } from "constructs";
 import * as cdk from "aws-cdk-lib";
 import * as lambda from "aws-cdk-lib/aws-lambda";
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
 
 dotenv.config();
 
@@ -16,9 +16,10 @@ export class AuthorizationServiceStack extends cdk.Stack {
       handler: "basic-authorizer.handler",
       code: lambda.Code.fromAsset("dist"),
       environment: {
-        marcigdd: process.env.your_github_username ?? "test",
+        marcigdd: "test",
       },
     });
+
     new cdk.CfnOutput(this, "ExportBasicAuthorizer", {
       value: basicAuthorizer.functionArn,
       exportName: "basicAuthorizerArn",

@@ -12,8 +12,15 @@ export const handler = async (event: {
   const [username, password] = Buffer.from(encodedCredentials, "base64")
     .toString()
     .split(":");
+  if (!process.env[username]) {
+    throw new Error("Unauthorized");
+  }
 
   const storedPassword = process.env[username];
+
+  console.log("username", username);
+  console.log("password", password);
+  console.log("storedPassword", storedPassword);
 
   if (storedPassword !== password) {
     throw new Error("Forbidden");
