@@ -91,5 +91,33 @@ module.exports = [
       path: path.resolve(__dirname, 'dist'),
       libraryTarget: 'commonjs2',
     },
+  },
+  {
+    entry: './lib/lambdas/basic-authorizer.ts',
+    target: 'node',
+    module: {
+      rules: [
+        {
+          test: /\.tsx?$/,
+          use: [
+            {
+              loader: 'ts-loader',
+              options: {
+                transpileOnly: true
+              },
+            },
+          ],
+          exclude: /node_modules/,
+        },
+      ],
+    },
+    resolve: {
+      extensions: ['.tsx', '.ts', '.js'],
+    },
+    output: {
+      filename: 'basic-authorizer.js',
+      path: path.resolve(__dirname, 'dist'),
+      libraryTarget: 'commonjs2',
+    },
   }
 ];

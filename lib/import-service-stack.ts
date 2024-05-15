@@ -7,9 +7,13 @@ import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as sns from "aws-cdk-lib/aws-sns";
 import * as subscriptions from "aws-cdk-lib/aws-sns-subscriptions";
+import * as iam from "aws-cdk-lib/aws-iam";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import { Construct } from "constructs";
 import { Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 export class ImportServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -123,7 +127,35 @@ export class ImportServiceStack extends cdk.Stack {
       { prefix: "uploaded/" }
     );
 
-    importResource.addMethod("GET", importProductsFileLambdaIntegration);
+    const basicAuthorizerLambda = new lambda.Function(this, "basicAuthorizer", {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      memorySize: 1024,
+      timeout: cdk.Duration.seconds(5),
+      handler: "basic-authorizer.handler",
+      code: lambda.Code.fromAsset("dist"),
+      environment: {
+        marcigdd: process.env.PASSWORD ?? "test",
+      },
+    });
+    basicAuthorizerLambda.addPermission("APIGatewayInvokePermission", {
+      action: "lambda:InvokeFunction",
+      principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
+      sourceArn: api.arnForExecuteApi(),
+    });
+
+    const authorizer = new apigateway.TokenAuthorizer(
+      this,
+      "basicAuthorizerToken",
+      {
+        handler: basicAuthorizerLambda,
+        identitySource: "method.request.header.Authorization",
+      }
+    );
+
+    importResource.addMethod("GET", importProductsFileLambdaIntegration, {
+      authorizationType: apigateway.AuthorizationType.CUSTOM,
+      authorizer,
+    });
     importResource.addCorsPreflight({
       allowOrigins: apigateway.Cors.ALL_ORIGINS,
       allowMethods: apigateway.Cors.ALL_METHODS,
